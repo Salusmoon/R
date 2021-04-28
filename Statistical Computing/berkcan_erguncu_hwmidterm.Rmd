@@ -1,0 +1,329 @@
+---
+title: "berkcan_erguncu_hwmidterm"
+author: "berkcan erguncu"
+date: "4/30/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+## Data
+
+This data include some information about students information at the time of graduation and their salary after graduate.
+
+```{r students}
+students <- read.csv("https://userpage.fu-berlin.de/soga/200/2010_data_sets/students.csv")
+summary(students)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+
+
+
+## 1) Plots for Hidden Pattern
+```{r pressure, echo=FALSE}
+library(ggplot2)
+ggplot(data = students,aes(x=semester,y=nc.score,col=age))+
+  geom_point()+
+  ylab("Semester")+
+  xlab("NC Score")+
+  facet_wrap(~students$gender)+
+  theme_light()
+  
+ggplot(students, aes(x=nc.score,col=minor, fill=minor)) + 
+  geom_bar()+
+  labs(title = "Student nc score bar for major departmant and minor departmant ")+
+  facet_wrap(~students$major)
+
+ggplot(students, aes(x=nc.score, col=religion,fill = religion)) + 
+  geom_bar() + 
+  labs(title="Student NC score for religion-gender bar", x="nc score")+
+  facet_wrap(~students$gender)
+
+ggplot(students, aes(x=nc.score, y= salary, col=minor))+
+  geom_point()+
+  labs(title="salaries after graduation according to the students' scores and the department they completed.")+
+  facet_wrap(~students$major)
+
+ggplot(students, aes(x=major ,col=gender, fill=gender)) + 
+  geom_bar()+
+  labs(title = "Student Major bar for age and gender")
+ 
+ggplot(students, aes(y=minor, col=religion,fill = religion)) + 
+  geom_bar() + 
+  labs(title="Student minor-religion bar", y="Minor")+
+  facet_wrap(~students$gender)
+            
+ggplot(students, aes(x=score1, y= score2, col=salary))+
+  geom_point()+
+  labs(title="salaries of graduates by exams")+
+  facet_wrap(~students$graduated)
+
+```
+
+# 2) Confidance Intervals
+
+## Confidence Interval for Nc.score
+
+```{r conf.int.ncscore.gender, echo=FALSE}
+gender = c("Female","Male")
+nc.score.female.t.test = with(students, t.test(x=nc.score[gender=="Female"]))
+nc.score.male.t.test = with(students, t.test(x=nc.score[gender=="Male"]))
+nc.score.means = c(nc.score.female.t.test$estimate,nc.score.male.t.test$estimate)
+nc.score.conf.lower = c(nc.score.female.t.test$conf.int[1],nc.score.male.t.test$conf.int[1])
+nc.score.conf.upper = c(nc.score.female.t.test$conf.int[2],nc.score.male.t.test$conf.int[2])
+df.nc.score = data.frame(gender,nc.score.means,nc.score.conf.lower,nc.score.conf.upper)
+
+
+ggplot(df.nc.score, aes(x=gender, y=nc.score.means, fill=gender)) + ylim(0,3) +   # plots
+    geom_bar(position=position_dodge(), stat="identity") +
+    geom_errorbar(aes(ymin=nc.score.conf.lower, ymax=nc.score.conf.upper),
+                  width=0.5,                    # Width of the error bars
+                  position=position_dodge(1))
+
+```
+
+## Confidence Interval for Score1
+
+```{r conf.int.score1.gender, echo=FALSE}
+
+gender = c("Female","Male")
+score1.female.t.test = with(students, t.test(x=score1[gender=="Female"]))
+score1.male.t.test = with(students, t.test(x=score1[gender=="Male"]))
+score1.means = c(score1.female.t.test$estimate,score1.male.t.test$estimate)
+score1.conf.lower = c(score1.female.t.test$conf.int[1],score1.male.t.test$conf.int[1])
+score1.conf.upper = c(score1.female.t.test$conf.int[2],score1.male.t.test$conf.int[2])
+df.score1 = data.frame(gender,score1.means,score1.conf.lower,score1.conf.upper)
+
+ggplot(df.score1, aes(x=gender, y=score1.means, fill=gender)) + ylim(0,80) +   #plots
+    geom_bar(position=position_dodge(), stat="identity") +
+    geom_errorbar(aes(ymin=score1.conf.lower, ymax=score1.conf.upper),
+                  width=0.5,                    # Width of the error bars
+                  position=position_dodge(1))
+```
+
+## Confidence Interval for Score2
+
+```{r conf.int.score2.gender, echo=FALSE}
+gender = c("Female","Male")
+score2.female.t.test = with(students, t.test(x=score2[gender=="Female"]))
+score2.male.t.test = with(students, t.test(x=score2[gender=="Male"]))
+score2.means = c(score2.female.t.test$estimate,score2.male.t.test$estimate)
+score2.conf.lower = c(score2.female.t.test$conf.int[1],score2.male.t.test$conf.int[1])
+score2.conf.upper = c(score2.female.t.test$conf.int[2],score2.male.t.test$conf.int[2])
+df.score2 = data.frame(gender,score2.means,score2.conf.lower,score2.conf.upper)
+
+ggplot(df.score2, aes(x=gender, y=score2.means, fill=gender)) + ylim(0,80) +
+    geom_bar(position=position_dodge(), stat="identity") +
+    geom_errorbar(aes(ymin=score2.conf.lower, ymax=score2.conf.upper),
+                  width=0.5,                    # Width of the error bars
+                  position=position_dodge(1))
+```
+
+# 3) Confidence Interval
+
+## Confidance Interval for Salary by Gender
+```{r conf.int.salary.gender, echo=FALSE}
+gender = c("Female","Male")
+salary.female.t.test = with(students, t.test(x=salary[gender=="Female"]))
+salary.male.t.test = with(students, t.test(x=salary[gender=="Male"]))
+salary.means = c(salary.female.t.test$estimate,salary.male.t.test$estimate)
+salary.conf.lower = c(salary.female.t.test$conf.int[1],salary.male.t.test$conf.int[1])
+salary.conf.upper = c(salary.female.t.test$conf.int[2],salary.male.t.test$conf.int[2])
+df.salary = data.frame(gender,salary.means,salary.conf.lower,salary.conf.upper)
+
+ggplot(df.salary, aes(x=gender, y=salary.means, fill=gender)) +
+    geom_bar(position=position_dodge(), stat="identity") +
+    geom_errorbar(aes(ymin=salary.conf.lower, ymax=salary.conf.upper),
+                  width=0.5,                    # Width of the error bars
+                  position=position_dodge(1))
+```
+
+## Confidance Interval for Salary Group by Religion
+```{r conf.int.salary.religion, echo=FALSE}
+religion = c("Catholic","Muslim","Orthodox","Other","Protestant")
+salary.catholic.t.test = with(students, t.test(x=salary[religion=="Catholic"]))
+salary.muslim.t.test = with(students, t.test(x=salary[religion=="Muslim"]))
+salary.orthodox.t.test = with(students, t.test(x=salary[religion=="Orthodox"]))
+salary.other.t.test = with(students, t.test(x=salary[religion=="Other"]))
+salary.protestant.t.test = with(students, t.test(x=salary[religion=="Protestant"]))
+
+salary.religion.means = c(salary.catholic.t.test$estimate,salary.muslim.t.test$estimate,salary.orthodox.t.test$estimate,salary.other.t.test$estimate,salary.protestant.t.test$estimate)
+salary.religion.conf.lower = c(salary.catholic.t.test$conf.int[1],salary.muslim.t.test$conf.int[1],salary.orthodox.t.test$conf.int[1],salary.other.t.test$conf.int[1],salary.protestant.t.test$conf.int[1])
+salary.religion.conf.upper = c(salary.catholic.t.test$conf.int[2],salary.muslim.t.test$conf.int[2],salary.orthodox.t.test$conf.int[2],salary.other.t.test$conf.int[2],salary.protestant.t.test$conf.int[2])
+df.salary.religion = data.frame(religion,salary.religion.means ,salary.religion.conf.lower ,salary.religion.conf.upper )
+
+ggplot(df.salary.religion, aes(x=religion, y=salary.religion.means , fill=religion)) +
+    geom_bar(position=position_dodge(), stat="identity") +
+    geom_errorbar(aes(ymin=salary.religion.conf.lower , ymax=salary.religion.conf.upper ),
+                  width=0.5,                    # Width of the error bars
+                  position=position_dodge(1))
+```
+
+## Confidance Interval of Salary Group By Major
+```{r conf.int.salary.major, echo=FALSE}
+major = c("Bio","EF","ES","MatsSt","PS","SS")
+
+salary.biology.t.test = with(students, t.test(x=salary[major=="Biology"]))
+salary.economics.finance.t.test = with(students, t.test(x=salary[major=="Economics and Finance"]))
+salary.environmental.sci.t.test = with(students, t.test(x=salary[major=="Environmental Sciences"]))
+salary.math.stats.t.test = with(students, t.test(x=salary[major=="Mathematics and Statistics"]))
+salary.political.sci.t.test = with(students, t.test(x=salary[major=="Political Science"]))
+salary.social.sci.t.test = with(students, t.test(x=salary[major=="Social Sciences"]))
+
+salary.major.means = c(salary.biology.t.test$estimate,salary.economics.finance.t.test$estimate,salary.environmental.sci.t.test$estimate,salary.math.stats.t.test$estimate,salary.political.sci.t.test$estimate,salary.social.sci.t.test$estimate)
+
+salary.major.conf.lower = c(salary.biology.t.test$conf.int[1],salary.economics.finance.t.test$conf.int[1],salary.environmental.sci.t.test$conf.int[1],salary.math.stats.t.test$conf.int[1],salary.political.sci.t.test$conf.int[1],salary.social.sci.t.test$conf.int[1])
+
+salary.major.conf.upper = c(salary.biology.t.test$conf.int[2],salary.economics.finance.t.test$conf.int[2],salary.environmental.sci.t.test$conf.int[2],salary.math.stats.t.test$conf.int[2],salary.political.sci.t.test$conf.int[2],salary.social.sci.t.test$conf.int[2])
+
+df.salary.major = data.frame(major,salary.major.means ,salary.major.conf.lower ,salary.major.conf.upper )
+
+ggplot(df.salary.major, aes(x=major, y=salary.major.means , fill=major)) +
+    geom_bar(position=position_dodge(), stat="identity") +
+    geom_errorbar(aes(ymin=salary.major.conf.lower , ymax=salary.major.conf.upper ),
+                  width=0.5,                    # Width of the error bars
+                  position=position_dodge(1))
+```
+
+# 4) One Sample Hypothesis Test
+
+H0: = 34000
+Ha: > 34000
+
+```{r hypo.salary.women, echo=FALSE}
+with(students, t.test(x=salary[gender=="Female"],alternative="greater", mu=35000))
+```
+From the output we see that the p-value = 0.000331. Hence, there is moderately strong evidence for reject that the mean Salary in the womans is above 35000$.
+
+
+# 5) Two Sample Hypothesis Test
+
+## Two Sample Hypothesis Test Salary-Gender
+```{r hypo.salary.gender, echo=FALSE}
+with(students, t.test(salary~gender,alternative="greater", mu=30000))
+```
+
+## Two Sample Hypothesis Test Score1-Gender
+```{r hypo.score1.gender, echo=FALSE}
+with(students, t.test(score1~gender,alternative="greater", mu=60))
+```
+
+# 6) Two Sample Hypothesis Test and Differences of Means
+
+## Two Sample Hypothesis Test and Differences Of Means Salary-(Political Sciences- Economics and Finance)
+```{r hypo.salary.major, echo=FALSE}
+with(students, t.test(x=salary[major=="Political Science"],y=salary[major=="Economics and Finance"]))
+```
+```{r hypo.mean.salary.major, echo=FALSE}
+salary.major.subset=subset(students, major == "Political Science" | major =="Economics and Finance",select=c(salary, major))
+qplot(x = major, y = salary,
+  geom = "boxplot", data = salary.major.subset,
+  xlab = "Majors",
+  ylab = "Salary",
+  fill = I("lightblue"))
+```
+
+# 7) Functions
+
+## ## Median Absolute Deviation
+```{r MADcalculator, echo=FALSE}
+Madcalculator <- function(x) {
+  x=sort(x,decreasing = FALSE)
+  len=length(x)
+  if(len%%2==0){
+    med=(x[len/2]+x[(len/2)+1])/2
+  }
+  else{
+    med=x[len/2]
+  }
+  xMadList=abs(x-med)
+  xMadList=sort(xMadList,decreasing = FALSE)
+  if(len%%2==0){
+    xMad=(xMadList[len/2]+xMadList[(len/2)+1])/2
+  }
+  else{
+    xMad=xMadList[len/2]
+  }
+  return(xMad)
+}
+Madcalculator(students[["salary"]])
+```
+
+
+## Missing Value Replacer
+
+```{r MissingValueReplacer, echo=FALSE}
+MissingValueReplacer <- function(x,y) {
+  
+  changeValueX <- mean(x[!is.na(x)],trim=0.10)
+  x[is.na(x)]<-changeValueX
+  
+  changeValueY <- mean(y[!is.na(y)],trim=0.10)
+  y[is.na(y)]<-changeValueY
+  
+  return(c(x=list(x),y=list(y)))
+}
+```
+
+
+Score1 and Score2 with missing value (1,21)
+```{r MissingValueList, echo=FALSE}
+students[["score1"]][1:21]
+students[["score2"]][1:21]
+```
+
+Score1 and Score2 after Missing Value Replacer (1,21)
+```{r MissingValueListWO, echo=FALSE}
+miss=MissingValueReplacer(students[["score1"]][1:21],students[["score2"]][1:21])
+miss[["x"]]
+miss[["y"]]
+```
+
+
+## Correlation Analysis Score1-Nc.Score
+
+```{r CorrelationAnalyzer, echo=FALSE}
+CorrelationAnalyzer <- function(x,y) {
+  miss=MissingValueReplacer(x,y)
+  x= miss[["x"]]
+  y= miss[["y"]]
+  plot(x, y, main = "Scatter Plot",
+       xlab = "X axis title", ylab = "Y axis title",
+       pch = 19, frame = TRUE)
+  n=length(x)
+  xy=x*y
+  x2=x*x
+  y2=y*y
+  pccT= ((n*sum(xy))-(sum(x)*sum(y)))
+  pccB= sqrt(((n*sum(x2))-((sum(x)*sum(x))))*((n*sum(y2))-(sum(y)*sum(y))))
+  pcc=pccT/pccB
+  print(pcc)
+  if(pcc>0){
+    print("POSITIVE")
+  }
+  else if(pcc<0){
+    print("NEGATIVE")
+  }
+  else{
+    print("No Correlation")
+  }
+}
+
+CorrelationAnalyzer(students[["score1"]],students[["nc.score"]])
+
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

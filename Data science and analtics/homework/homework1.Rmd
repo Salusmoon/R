@@ -1,0 +1,150 @@
+---
+title: "Marvel Heroes Homework"
+author: "Berkcan Erguncu"
+date: "10/28/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(MASS)
+library(dplyr)
+library(tibble)
+library(ggplot2)
+
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+heroes = read.csv("heroes_information.csv", encoding="UTF-8")
+```
+Q2)
+
+Number of female characters with blue eyes:
+
+```{r}
+male_blue_eye = filter(heroes, Gender=="Male" , Eye.color=="blue" )
+nrow(male_blue_eye)
+```
+Q3)
+
+Number of female characters with blue eyes and without bad alligment:
+
+```{r}
+male_blue_eye_bad = filter(male_blue_eye, Alignment != "bad")
+nrow(male_blue_eye_bad)
+```
+Q)4
+
+Most common race summary table
+
+```{r}
+Race_group = filter(heroes, Race != "-")
+
+Race_group  %>%
+  group_by(Race_group $Race) %>%
+  summarise( percentage = round(n() /nrow(Race_group) *100, 2)) %>%
+  arrange(desc(percentage))
+
+```
+Most common skin color
+
+```{r}
+skin_color_group = filter(heroes, Skin.color != "-")
+
+skin_color_group  %>%
+  group_by(skin_color_group $Skin.color) %>%
+  summarise( percentage = round(n() /nrow(skin_color_group) *100, 2)) %>%
+  arrange(desc(percentage))
+```
+
+Q5)
+
+Mean and standard deviation of height and weight.
+
+```{r}
+mean_height = mean(filter(heroes, heroes$Height >= 0)$Height)
+sd_height = sd(filter(heroes, heroes$Height >= 0)$Height)
+
+mean_weight = mean(filter(heroes, heroes$Weight >= 0)$Weight)
+sd_weight = mean(filter(heroes, heroes$Weight >= 0)$Weight)
+
+sprintf("Height Mean:  %s", mean_height)
+sprintf("Height SD:  %s", sd_height)
+sprintf("Weight Mean:  %s", mean_weight)
+sprintf("Weight SD:  %s", sd_weight)
+```
+Tallest and shortest heroes.
+
+```{r}
+height = filter(heroes, heroes$Height >= 0)
+height <-height[order(height$Height),]
+
+tallest = tail(height, n=1)
+sprintf("Hero Name :  %s", tallest$name)
+sprintf("Hero height :  %s", tallest$Height)
+shortest = head(height, n=1)
+sprintf("Hero Name :  %s", shortest$name)
+sprintf("Hero height :  %s", shortest$Height)
+```
+Q6)
+
+Height comparison of good and bad characters
+
+```{r}
+goodbad_heroes = filter(heroes , Alignment!="neutral" & Alignment!="-")
+
+group_by(goodbad_heroes, Alignment) %>%
+  summarise(
+    count = n(),
+    mean = mean(Height, na.rm = TRUE),
+    sd = sd(Height, na.rm = TRUE)
+  )
+
+```
+Weight comparison of good and bad characters
+
+```{r}
+group_by(goodbad_heroes, Alignment) %>%
+  summarise(
+    count = n(),
+    mean = mean(Weight, na.rm = TRUE),
+    sd = sd(Weight, na.rm = TRUE)
+  )
+```
+```{r}
+heroes_power = read.csv("super_hero_powers.csv", encoding="UTF-8", stringsAsFactors = FALSE)
+
+heroes_power[heroes_power == "True"] <- TRUE
+heroes_power[heroes_power == "False"] <- FALSE
+heroes_power[2:168] <- apply(heroes_power[2:168], 2,
+                    function(x) as.logical(as.character(x)))
+
+heroes_powers <- heroes_power %>%
+  mutate(Power = rowSums(heroes_power[2:168])*10) %>%
+  select(hero_names, Power)
+
+heroes_total_power = merge(x=heroes, y=heroes_powers,by.x="name",by.y = "hero_names")
+
+heroes_total_power_female = filter(heroes_total_power, Gender=="Female" )
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=TRUE}
+ggplot(heroes_total_power_female, aes(x=Power,col=Alignment, fill=Alignment)) + 
+  geom_bar()+
+  labs(title = "Power chart according to the alignmet of female characters ")+
+  geom_text(stat = "count", aes(label = stat(count)), position = position_stack(vjust = 1), colour= "black")
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

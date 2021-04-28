@@ -1,0 +1,234 @@
+---
+title: "berkcan_erguncu_hwmidterm"
+author: "Berkcan Erguncu"
+date: "12/7/2020"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(MASS)
+library(dplyr)
+library(tibble)
+library(ggplot2)
+library(devtools)
+library(factoextra)
+library(stats)
+
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+
+data =read.csv("/cloud/project/data_science/midterm/online_shoppers_intention.csv")
+summary(data)
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure}
+ggplot(data, aes(x=Region, y=PageValues, fill=Weekend)) + 
+  geom_bar(stat="identity", position=position_dodge())+
+  labs(title = "Every Region Page Values for Weekend")
+```
+
+
+```{r }
+ggplot(data, aes(x=Region, y=PageValues, fill=Month)) + 
+  geom_bar(stat="identity", position=position_dodge())+
+  labs(title = "Every Region Page Values for Months")
+
+```
+
+
+```{r }
+ggplot(data, aes(x=Informational, y=Informational_Duration, fill=Region)) + 
+  geom_bar(stat="identity", position=position_dodge())+
+  labs(title = "Informational page size and duration Time for Region")
+```
+
+
+```{r }
+ggplot(data, aes(x=ProductRelated,y=ProductRelated_Duration, fill=Region)) + 
+  geom_bar(stat="identity", position=position_dodge())+
+  labs(title = "Product Related size and Duration time for Region")
+```
+
+
+## My focus area
+```{r }
+Region_shop = data %>% select(3,4,5,6,7,8,9,11,14,17,18)
+Region_count = Region_shop %>% count(Region)
+Average_Region_shop = aggregate(Region_shop[, 1:7], list(Region_shop$Region), mean)
+Average_Region_shop$Customer = Region_count$n
+
+names(Average_Region_shop)[names(Average_Region_shop) == "Group.1"] <- "Region"
+
+```
+I'm focusing to customer shopping activities in each region. These activities are based on the number of sites they use, the number of products they have viewed and the time they have been on these pages. I then recorded the averages of the activities in these regions. That's why I removed the other columns from the dataset.
+
+```{r }
+ggplot(Average_Region_shop, aes(x=Region,y=Customer)) + 
+  geom_bar(stat="identity", position=position_dodge())+
+  labs(title = "Region-Customer ")
+```
+
+Each region has different customer numbers. it is seen that the largest region is 1 and the smallest region is 5.
+
+```{r }
+ggplot(Average_Region_shop, aes(x=Region,y=ProductRelated, fill=ProductRelated_Duration)) + 
+  geom_bar(stat="identity", position=position_dodge())+
+  labs(title = "Average Product related page and Duration time of each Region")
+
+```
+
+
+```{r }
+
+ggplot(Average_Region_shop, aes(x=Region,y=Informational, fill=Informational_Duration)) + 
+  geom_bar(stat="identity", position=position_dodge())+
+  labs(title = "Average Shopping site pages visited and Duration time of each Region")
+```
+
+## Segmentation
+
+To understand that a customer is shopping online, it does not make any difference to know from which location, when or from which vehicle a customer enters the site. For this reason, I removed the columns that give similar information from the data.
+Instead, I focused on activity data on shopping sites.I created the data that I will work with by saving the rows with region 3 into a new data.
+
+```{r }
+
+data_region3 = filter(Region_shop, Region== 3)
+
+data_region3 = data_region3 %>% select(1,2,3,4,5,6,7,11)
+```
+
+## PCA 
+```{r }
+data_region3.pca <- prcomp(data_region3[,c(1:7)], center = TRUE,scale. = TRUE)
+summary(data_region3.pca)
+```
+
+
+```{r }
+biplot(data_region3.pca)
+```
+
+
+```{r }
+screeplot(data_region3.pca, type = "l", npcs = 7, main = "Screeplot of the first 7 PCs")
+abline(h = 1, col="red", lty=5)
+legend("topright", legend=c("Eigenvalue = 1"),
+       col=c("red"), lty=5, cex=0.6)
+```
+
+
+```{r }
+group=as.factor(data_region3$Revenue)
+fviz_pca_ind(data_region3.pca, geom.ind = "point", pointshape = 21, 
+             pointsize = 2, 
+             fill.ind = group,
+             col.ind = "red", 
+             palette = "jco", 
+             addEllipses = TRUE,
+             label = "var",
+             col.var = "blue",
+             repel = TRUE,
+             legend.title = "Diagnosis") +
+  ggtitle("2D PCA-plot from 30 feature dataset") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+This graph shows the actual class distribution of the data. There is a clear class distinction visible.
+
+## Clustering
+
+```{r }
+set.seed(101)
+km <- kmeans(data_region3[,1:7], 2)
+plot(data_region3.pca$x[,1],data_region3.pca$x[,2], xlab="PC1", 
+     ylab = "PC2", 
+     main = "PC1 / PC2 - plot", 
+     col=km$cluster)
+table(predicted=km$cluster, data_region3$Revenue)
+```
+This is the result I found as a result of the estimated classification of graphical data. Black dots represent online shoppers, red dots represent customers who do not shop online. 
+
+```{r }
+set.seed(102)
+km <- kmeans(data_region3[,1:7], 2)
+plot(data_region3.pca$x[,1],data_region3.pca$x[,2], xlab="PC1", 
+     ylab = "PC2", 
+     main = "PC1 / PC2 - plot", 
+     col=km$cluster)
+
+table(predicted=km$cluster, data_region3$Revenue)
+```
+This graph is the same as the graph above, but the colors are inverted.
+
+```{r }
+table(predicted=km$cluster, true=data_region3$Revenue)
+```
+
+The difference between my estimated classification and real classes is seen in the table. It is predicted that around 2200 people do not shop, but 299 people actually shop online. Likewise, although it is estimated that about 200 people are shopping, only 50 of them is a correct guess.
+
+
+
+```{r}
+km <- kmeans(data_region3[,1:7], 2)
+#We can also plot clusters with fviz_cluster() function
+fviz_cluster(km, data = data_region3[,1:7])
+```
+In the graph, the areas of the classes we estimated are shown. As can be seen, in some places, 2 fields are seen on top of each other.
+
+```{r}
+data_region3 %>% select(Revenue) %>% kmeans(centers=2) -> km
+customer_cluster <- data.frame(data_region3, cluster=factor(km$cluster))
+ggplot(customer_cluster, aes(x=Informational, y=Informational_Duration, color=cluster, shape=Revenue)) + geom_point()
+```
+
+The graph shows how many online shopping sites customers click and the average time they spend on these sites.
+
+
+```{r}
+data_region3 %>% select(Revenue) %>% kmeans(centers=2) -> km
+customer_cluster <- data.frame(data_region3, cluster=factor(km$cluster))
+ggplot(customer_cluster, aes(x=ProductRelated, y=ProductRelated_Duration, color=cluster, shape=Revenue)) + geom_point()
+```
+The graph of how many products the customers clicked and the average time spent on these products can be seen.
+
+```{r}
+#Agglomerative hierarchical clustering (HC)---hclust function
+distance <- dist(data_region3[,1:7], method="euclidean") 
+#Elbow method can also be used here
+fviz_nbclust(data_region3[,1:7], FUN = hcut, method = "wss")
+
+```
+
+
+```{r}
+hier <- hclust(distance, method="average")
+plot(hier) 
+rect.hclust(hier, k=2, border="red")
+```
+
+
+```{r}
+hier_cut <- cutree(hier, 2)
+table(predicted=hier_cut, true=data_region3$Revenue)
+```
+
+When we apply a different clustering method, we see a very different result from the first method. It was estimated that 2400 customers did not shop online, but the 344 people in the estimate were actually online shoppers. Of the 11 people thought to shop online, 6 were actually customers who did not shop online.
+
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
